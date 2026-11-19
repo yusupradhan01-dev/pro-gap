@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pro Gap: compare your Dota 2 games with the pros</title>
+  <meta name="description" content="Enter your Steam ID and see where your Dota 2 games fall behind pro players on the same hero and position: farm, deaths, item and level timings, fights and vision.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2317251F'/><path d='M7 23 L14 13 L19 18 L25 8' stroke='%23D9A441' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Pro Gap home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6"/><path d="M7 23 L14 13 L19 18 L25 8"/></svg>
+      <span>Pro Gap</span>
+    </a>
+    <span class="patch" id="patchTag">Patch 7.42</span>
+  </header>
+
+  <main id="main">
+    <!-- Start -->
+    <section id="start" class="start">
+      <div class="start-copy">
+        <h1>Find the gap between your games and the pros'.</h1>
+        <p class="lede">Enter your Steam ID. Pro Gap reads your recent ranked games and lines them up against pro players on the same hero and position: last hits, deaths, item and level timings, fights and wards.</p>
+
+        <form id="startForm" class="start-form" novalidate>
+          <label for="steamId">Steam ID or profile link</label>
+          <div class="input-row">
+            <input id="steamId" name="steamId" inputmode="numeric" autocomplete="off" spellcheck="false"
+                   placeholder="e.g. 123456789 or opendota.com/players/123456789" required>
+            <button type="submit" class="btn primary">Analyse my games</button>
+          </div>
+          <p class="field-error" id="startError" role="alert" hidden></p>
+          <details class="more">
+            <summary>Options</summary>
+            <div class="options">
+              <label>Games to read
+                <select id="gameCount">
+                  <option value="20">Last 20</option>
+                  <option value="30" selected>Last 30</option>
+                  <option value="50">Last 50</option>
+                  <option value="100">Last 100</option>
+                </select>
+              </label>
+              <label>Pro games per hero
+                <select id="proCount">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                </select>
+              </label>
+              <label class="wide">OpenDota API key (optional, makes loading about 8× faster)
+                <input id="apiKey" type="password" autocomplete="off" placeholder="Stays in this browser only">
+              </label>
+            </div>
+          </details>
+        </form>
+        <p class="demo-line">No public match data? <button class="link" id="demoBtn" type="button">Try it with demo data</button></p>
+      </div>
+
+      <figure class="start-figure" aria-hidden="true">
+        <svg viewBox="0 0 420 300" class="hero-curve">
+          <g class="grid">
+            <line x1="40" y1="250" x2="400" y2="250"/><line x1="40" y1="190" x2="400" y2="190"/>
+            <line x1="40" y1="130" x2="400" y2="130"/><line x1="40" y1="70" x2="400" y2="70"/>
+            <line x1="160" y1="40" x2="160" y2="250" class="ten"/>
+          </g>
+          <path class="band" d="M40 250 C120 215 220 140 400 52 L400 92 C220 168 120 228 40 250Z"/>
+          <path class="pro" d="M40 250 C120 222 220 155 400 72"/>
+          <path class="you" d="M40 250 C120 230 220 186 400 128"/>
+          <text x="164" y="268">10:00</text>
+          <text x="404" y="76" class="lbl-pro">Pros</text>
+          <text x="404" y="132" class="lbl-you">You</text>
+        </svg>
+        <figcaption>Last hits by minute: the gap usually opens before 10:00.</figcaption>
+      </figure>
+
+      <div class="start-notes">
+        <p><strong>Make your games visible.</strong> In Dota 2, go to Settings, Options, Social and turn on Expose Public Match Data. It applies to games played after you switch it on.</p>
+        <p><strong>Nothing is stored on a server.</strong> Your browser talks straight to OpenDota and keeps a cache, so a second visit loads almost instantly.</p>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading" class="loading" hidden aria-live="polite">
+      <div class="clock" id="clock">00:00</div>
+      <p class="loading-step" id="loadStep">Starting</p>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loadBar"><span></span></div>
+      <p class="loading-note" id="loadNote">The free OpenDota API allows about one request a second, so a first visit takes a minute or two.</p>
+      <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="results" hidden>
+      <div class="profile" id="profile"></div>
+      <div class="filters" id="filters" role="group" aria-label="Filters"></div>
+      <div class="layout">
+        <nav class="toc" aria-label="Sections">
+          <a href="#overview">Overview</a>
+          <a href="#heroes">Heroes vs pros</a>
+          <a href="#spikes">Power spikes</a>
+          <a href="#builds">Item builds</a>
+          <a href="#progress">Progress</a>
+          <a href="#matchups">Matchups</a>
+          <a href="#fights">Teamfights</a>
+          <a href="#vision">Vision</a>
+          <a href="#model">What wins games</a>
+          <a href="#matches">Your matches</a>
+        </nav>
+        <div class="content" id="content"></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="matchDialog" aria-labelledby="dlgTitle">
+    <div class="dlg-head">
+      <h2 id="dlgTitle">Match</h2>
+      <button class="btn ghost" id="dlgClose" type="button">Close</button>
+    </div>
+    <div id="dlgBody"></div>
+  </dialog>
+
+  <footer class="foot">
+    <p>Match data from the <a href="https://www.opendota.com" rel="noopener">OpenDota API</a>. Pro Gap is a fan project, not affiliated with Valve. Dota 2 is a trademark of Valve Corporation.</p>
+  </footer>
+
+  <script src="js/vendor/chart.umd.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
