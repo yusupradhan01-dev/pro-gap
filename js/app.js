@@ -243,7 +243,7 @@ function secOverview(you) {
   const fixes = A.topFixes(state.rows, you, 3);
   const plan = A.coachingPlan(state.rows, you);
   const notes = [];
-  if (state.meta.unparsed.length) notes.push(`${state.meta.unparsed.length} recent games aren't analysed by OpenDota yet. <button class="link" id="reqParse" type="button">Request analysis</button>, then come back in about 10 minutes.`);
+  if (state.meta.unparsed.length) notes.push(`${state.meta.unparsed.length} recent ${state.meta.unparsed.length === 1 ? "game isn't" : "games aren't"} analysed by OpenDota yet. <button class="link" id="reqParse" type="button">Request analysis</button>, then come back in about 10 minutes.`);
   const older = Object.entries(state.meta.patchUsed || {}).filter(([, p]) => p !== PATCH).map(([h]) => esc((state.meta.heroes[h] || {}).localized_name));
   if (older.length) notes.push(`Patch 7.42 is brand new, so there aren't many pro games on it yet. Pro games for ${older.join(", ").replace(/, ([^,]*)$/, " and $1")} include 7.41 as well.`);
   return `<section id="overview"><h2>Your biggest gaps</h2>
@@ -251,7 +251,7 @@ function secOverview(you) {
     ${notes.map(n => `<p class="notice">${n}</p>`).join("")}
     <div class="fixes">${fixes.length ? fixes.map(f => { const s = A.fixSentence(f); return `<div class="fix"><div><h3>${esc(s.head)}</h3><p>${esc(s.body)}</p></div>${gapMeter(f)}</div>`; }).join("") : `<p class="empty">Play a few more games at this position to see your gaps (needs 3+ games).</p>`}</div>
     ${plan.length ? `<h3 style="margin-top:32px">Four-week plan</h3>
-      <p class="intro">One focus a week, starting with the biggest gap. Targets are where the lower quarter of pro games sit, so they're reachable.</p>
+      <p class="intro">One focus a week, starting with the biggest gap. Each target is the next reachable step: the lower quarter of pro games, or the pro median once you're past that.</p>
       <ol class="plan">${plan.map(p => `<li><b>Week ${p.week}: ${esc(p.focus)}</b>, from ${A.fmt(p.now)} to ${p.higher ? "" : "under "}${A.fmt(p.target)}. ${esc(p.how)}</li>`).join("")}</ol>
       <button class="btn small ghost" id="copyPlan" type="button">Copy plan</button>` : ""}
   </section>`;

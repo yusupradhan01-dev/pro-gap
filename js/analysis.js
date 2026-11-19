@@ -241,8 +241,14 @@ export function topFixes(rows, you, n = 3) {
   return all.sort((a, b) => a.z - b.z).slice(0, n);
 }
 
+// First reachable target: the pro lower quartile, or the pro median once you're already past that.
+export function nextTarget(f) {
+  if (f.higher) return f.you < f.p25 ? f.p25 : f.pro;
+  return f.you > f.p75 ? f.p75 : f.pro;
+}
+
 export function fixSentence(f) {
-  const target = f.higher ? f.p25 : f.p75;
+  const target = nextTarget(f);
   return {
     head: `${f.label}: ${fmt(f.you)} vs ${fmt(f.pro)} for pros`,
     body: `You're better than ${Math.round(f.beat)}% of pro games here. First target: ${f.higher ? "raise" : "lower"} it to ${fmt(target)}.`,
@@ -473,7 +479,7 @@ const DRILLS = {
 
 export function coachingPlan(rows, you, weeks = 4) {
   return topFixes(rows, you, 12).filter(f => !["gpm", "xpm"].includes(f.metric)).slice(0, weeks).map((f, i) => ({
-    week: i + 1, position: f.position, focus: f.label, now: f.you, target: f.higher ? f.p25 : f.p75, higher: f.higher,
+    week: i + 1, position: f.position, focus: f.label, now: f.you, target: nextTarget(f), higher: f.higher,
     how: DRILLS[f.metric] || "Watch one pro replay on your hero and copy their timings.",
   }));
 }
